@@ -1,0 +1,24 @@
+{
+  "paths": [
+    {
+      "path": "/v1/api",
+      "requestMethod": "GET",
+      "requestBody": "api_request.json",
+      "responseStatus": 500,
+      "responseBody": "{\"response\" : \"error message\"}"
+    },
+    {
+      "path": "/v3/api",
+      "requestMethod": "GET",
+      "requestBody": "api_request.json",
+      "responseStatus": 200,
+      "responseBodyFileReference": "response/api_response_object.json"
+    },
+    {
+      "path": "/v2/api",
+      "requestMethod": "GET",
+      "requestBody": "api_request.json",
+      "responseStatus": 200
+    }
+  ]
+}
