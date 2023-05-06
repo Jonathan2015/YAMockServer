@@ -1,4 +1,4 @@
-package de.brenner.it.server.response
+package de.brenner.it.server.parser
 
 import de.brenner.it.server.handler.HttpHandlerEntry
 import java.io.File

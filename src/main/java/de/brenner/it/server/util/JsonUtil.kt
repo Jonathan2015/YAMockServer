@@ -1,4 +1,4 @@
-package de.brenner.it.server.jsonutil
+package de.brenner.it.server.util
 
 import com.fasterxml.jackson.databind.ObjectMapper
 import de.brenner.it.server.handler.HttpHandlerEntries

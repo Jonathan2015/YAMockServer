@@ -2,16 +2,15 @@ package de.brenner.it.server.handler
 
 import com.sun.net.httpserver.HttpExchange
 import com.sun.net.httpserver.HttpHandler
-import de.brenner.it.server.config.ConfigParser
+import de.brenner.it.server.parser.ConfigParser
 import de.brenner.it.server.logger.ExchangeLogger
-import de.brenner.it.server.request.RequestParser
-import de.brenner.it.server.response.ResponseParser
-import java.io.File
+import de.brenner.it.server.parser.RequestParser
+import de.brenner.it.server.parser.ResponseParser
 import java.io.IOException
 import java.util.*
 import java.util.logging.Logger
 
-class HttpHandlerBuilder(private val configuration: File?) {
+class HttpHandlerBuilder(configFilePath: String) {
 
     companion object {
         private val LOGGER = Logger.getLogger(HttpHandlerBuilder::class.java.name)
@@ -20,9 +19,10 @@ class HttpHandlerBuilder(private val configuration: File?) {
     private val requestParser: RequestParser
     private val responseParser: ResponseParser
     private val httpHandlerEntries: HttpHandlerEntries
+    private val configParser: ConfigParser
 
     init {
-        val configParser = ConfigParser(configuration)
+        configParser = ConfigParser(configFilePath)
         requestParser = RequestParser()
         responseParser = ResponseParser()
         httpHandlerEntries = configParser.parseConfiguration()
@@ -33,7 +33,7 @@ class HttpHandlerBuilder(private val configuration: File?) {
             LOGGER.info("No HttpHandlerEntries were defined, return default HttpHandler for \"/\"")
             defaultHttpHandler
         } else {
-            LOGGER.info("HttpHandlerEntries=" + httpHandlerEntries.toString())
+            LOGGER.info("HttpHandlerEntries=$httpHandlerEntries")
             httpHandlingByConfig
         }
     }
@@ -48,7 +48,7 @@ class HttpHandlerBuilder(private val configuration: File?) {
                     generateResponse(exchange, httpHandlerEntryOptional.get())
                 } else {
                     message = "Invalid request"
-                    sendResponseBadRequest(exchange)
+                    exchange.sendResponseHeaders(400, 0)
                 }
                 ExchangeLogger.logHttpExchange(exchange, message)
             }
@@ -57,18 +57,14 @@ class HttpHandlerBuilder(private val configuration: File?) {
     private val defaultHttpHandler: HttpHandler
         private get() = HttpHandler { exchange: HttpExchange ->
             exchange.use { exchange ->
-                ExchangeLogger.logHttpExchange(exchange, "Print request data only:")
-                sendResponseHttpOk(exchange)
+                ExchangeLogger.logHttpExchange(exchange, "no Configuration was loaded - Print request data only:")
+                exchange.sendResponseHeaders(200, 0)
             }
         }
 
     private fun generateResponse(exchange: HttpExchange, httpHandlerEntry: HttpHandlerEntry) {
         try {
-            val parentPath: String = if (configuration == null) {
-                ""
-            } else {
-                configuration!!.parent
-            }
+            val parentPath: String = configParser.getConfigurationRootPath()
             val responseBody = responseParser.getResponseBody(parentPath, httpHandlerEntry)
             val responseLength = responseBody.size
             exchange.sendResponseHeaders(httpHandlerEntry.responseStatus!!, responseLength.toLong())
@@ -76,7 +72,10 @@ class HttpHandlerBuilder(private val configuration: File?) {
                 exchange.responseBody.write(responseBody)
             }
         } catch (e: IOException) {
-            LOGGER.warning("Sending response body failed, " + e.message)
+            LOGGER.warning("Sending response body failed, ${e.message}")
+            val responseErrorMessage = "Internal Server Error"
+            exchange.sendResponseHeaders(500, responseErrorMessage.length.toLong())
+            exchange.responseBody.write(responseErrorMessage.toByteArray())
         }
     }
 
@@ -85,16 +84,6 @@ class HttpHandlerBuilder(private val configuration: File?) {
             httpHandlerEntry.path!!.contains(exchange.requestURI.toASCIIString()) &&
                     httpHandlerEntry.requestMethod!!.lowercase(Locale.getDefault()) == exchange.requestMethod.lowercase(Locale.getDefault())
         }.findFirst()
-    }
-
-    @Throws(IOException::class)
-    private fun sendResponseHttpOk(exchange: HttpExchange) {
-        exchange.sendResponseHeaders(200, 0)
-    }
-
-    @Throws(IOException::class)
-    private fun sendResponseBadRequest(exchange: HttpExchange) {
-        exchange.sendResponseHeaders(400, 0)
     }
 
 }

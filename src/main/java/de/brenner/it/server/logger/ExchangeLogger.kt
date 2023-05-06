@@ -1,7 +1,7 @@
 package de.brenner.it.server.logger
 
 import com.sun.net.httpserver.HttpExchange
-import de.brenner.it.server.request.RequestParser
+import de.brenner.it.server.parser.RequestParser
 import java.util.logging.Logger
 
 object ExchangeLogger {

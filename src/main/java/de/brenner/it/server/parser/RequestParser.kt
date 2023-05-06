@@ -1,4 +1,4 @@
-package de.brenner.it.server.request
+package de.brenner.it.server.parser
 
 import com.sun.net.httpserver.HttpExchange
 import java.io.IOException
