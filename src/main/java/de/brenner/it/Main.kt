@@ -1,6 +1,6 @@
 package de.brenner.it
 
-import de.brenner.it.server.MockServer
+import de.brenner.it.mockserver.MockServer
 
 object Main {
     @JvmStatic

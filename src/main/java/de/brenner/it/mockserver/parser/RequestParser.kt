@@ -1,4 +1,4 @@
-package de.brenner.it.server.parser
+package de.brenner.it.mockserver.parser
 
 import com.sun.net.httpserver.HttpExchange
 import java.io.IOException

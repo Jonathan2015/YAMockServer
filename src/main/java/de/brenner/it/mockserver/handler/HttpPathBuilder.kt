@@ -1,45 +1,46 @@
-package de.brenner.it.server.handler
+package de.brenner.it.mockserver.handler
 
 import com.sun.net.httpserver.HttpExchange
 import com.sun.net.httpserver.HttpHandler
-import de.brenner.it.server.parser.ConfigParser
-import de.brenner.it.server.logger.ExchangeLogger
-import de.brenner.it.server.parser.RequestParser
-import de.brenner.it.server.parser.ResponseParser
+import de.brenner.it.mockserver.configuration.DefaultConfigurationSource
+import de.brenner.it.mockserver.configuration.IConfigurationSource
+import de.brenner.it.mockserver.logger.ExchangeLogger
+import de.brenner.it.mockserver.parser.RequestParser
+import de.brenner.it.mockserver.parser.ResponseParser
 import java.io.IOException
 import java.util.*
 import java.util.logging.Logger
 
-class HttpHandlerBuilder(configFilePath: String) {
+class HttpPathBuilder(configurationSource: IConfigurationSource) {
 
     companion object {
-        private val LOGGER = Logger.getLogger(HttpHandlerBuilder::class.java.name)
+        private val LOGGER = Logger.getLogger(HttpPathBuilder::class.java.name)
     }
 
     private val requestParser: RequestParser
     private val responseParser: ResponseParser
-    private val httpHandlerEntries: HttpHandlerEntries
-    private val configParser: ConfigParser
+    private val httpHandlerEntries: MutableMap<String, HttpPath>
+    private val configParser: DefaultConfigurationSource
 
     init {
-        configParser = ConfigParser(configFilePath)
+        configParser = DefaultConfigurationSource()
         requestParser = RequestParser()
         responseParser = ResponseParser()
-        httpHandlerEntries = configParser.parseConfiguration()
+        httpHandlerEntries = configurationSource.getConfiguration()
     }
 
     fun buildHttpHandler(): HttpHandler {
-        return if (httpHandlerEntries.paths.isEmpty()) {
+        return if (httpHandlerEntries.isEmpty()) {
             LOGGER.info("No HttpHandlerEntries were defined, return default HttpHandler for \"/\"")
-            defaultHttpHandler
+            enableDefaultHttpHandling()
         } else {
             LOGGER.info("HttpHandlerEntries=$httpHandlerEntries")
-            httpHandlingByConfig
+            enableHttpHandlingBasedOnConfig()
         }
     }
 
-    private val httpHandlingByConfig: HttpHandler
-        private get() = HttpHandler { exchange: HttpExchange ->
+    private fun enableHttpHandlingBasedOnConfig(): HttpHandler {
+        return HttpHandler { exchange: HttpExchange ->
             exchange.use { exchange ->
                 val httpHandlerEntryOptional = getHttpHandlerEntry(exchange)
                 val message: String
@@ -53,16 +54,18 @@ class HttpHandlerBuilder(configFilePath: String) {
                 ExchangeLogger.logHttpExchange(exchange, message)
             }
         }
+    }
 
-    private val defaultHttpHandler: HttpHandler
-        private get() = HttpHandler { exchange: HttpExchange ->
+    private fun enableDefaultHttpHandling(): HttpHandler {
+        return HttpHandler { exchange: HttpExchange ->
             exchange.use { exchange ->
                 ExchangeLogger.logHttpExchange(exchange, "no Configuration was loaded - Print request data only:")
                 exchange.sendResponseHeaders(200, 0)
             }
         }
+    }
 
-    private fun generateResponse(exchange: HttpExchange, httpHandlerEntry: HttpHandlerEntry) {
+    private fun generateResponse(exchange: HttpExchange, httpHandlerEntry: HttpPath) {
         try {
             val parentPath: String = configParser.getConfigurationRootPath()
             val responseBody = responseParser.getResponseBody(parentPath, httpHandlerEntry)
@@ -79,11 +82,13 @@ class HttpHandlerBuilder(configFilePath: String) {
         }
     }
 
-    private fun getHttpHandlerEntry(exchange: HttpExchange): Optional<HttpHandlerEntry> {
-        return httpHandlerEntries.paths.stream().filter { httpHandlerEntry: HttpHandlerEntry ->
-            httpHandlerEntry.path!!.contains(exchange.requestURI.toASCIIString()) &&
-                    httpHandlerEntry.requestMethod!!.lowercase(Locale.getDefault()) == exchange.requestMethod.lowercase(Locale.getDefault())
-        }.findFirst()
+    private fun getHttpHandlerEntry(exchange: HttpExchange): Optional<HttpPath> {
+        val httpPathEntry = httpHandlerEntries.get(exchange.requestURI.toASCIIString())
+        return if (httpPathEntry != null && httpPathEntry.requestMethod!!.lowercase(Locale.getDefault()) == exchange.requestMethod.lowercase(Locale.getDefault())) {
+            Optional.of(httpPathEntry)
+        } else {
+            Optional.empty()
+        }
     }
 
 }

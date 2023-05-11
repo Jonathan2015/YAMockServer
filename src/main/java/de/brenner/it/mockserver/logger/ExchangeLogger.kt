@@ -1,7 +1,7 @@
-package de.brenner.it.server.logger
+package de.brenner.it.mockserver.logger
 
 import com.sun.net.httpserver.HttpExchange
-import de.brenner.it.server.parser.RequestParser
+import de.brenner.it.mockserver.parser.RequestParser
 import java.util.logging.Logger
 
 object ExchangeLogger {

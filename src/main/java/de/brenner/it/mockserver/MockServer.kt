@@ -1,21 +1,27 @@
-package de.brenner.it.server
+package de.brenner.it.mockserver
 
 import com.sun.net.httpserver.HttpServer
-import de.brenner.it.server.handler.HttpHandlerBuilder
+import de.brenner.it.mockserver.configuration.DefaultConfigurationSource
+import de.brenner.it.mockserver.configuration.IConfigurationSource
+import de.brenner.it.mockserver.handler.HttpPathBuilder
 import java.io.IOException
 import java.net.InetSocketAddress
 import java.util.logging.Logger
 
-/**
- * TODO
- * - Make config path based on a canonical path
- * - configuration validation
- * - add different request,response types xml ,json, text/html
- */
-class MockServer(private val port: Int = 9090, private val configFilePath: String = "src/main/resources/config.json") {
+class MockServer(private var port: Int = 9090, private var configurationSource: IConfigurationSource = DefaultConfigurationSource()) {
 
     companion object {
         private val LOGGER = Logger.getLogger(MockServer::class.java.name)
+    }
+
+    fun port(port: Int): MockServer {
+        this.port = port
+        return this
+    }
+
+    fun configurationSource(configurationSource: IConfigurationSource): MockServer {
+        this.configurationSource = configurationSource
+        return this
     }
 
     fun start() {
@@ -25,7 +31,7 @@ class MockServer(private val port: Int = 9090, private val configFilePath: Strin
                     inetSocketAddress,
                     1,
                     "/",
-                    HttpHandlerBuilder(configFilePath).buildHttpHandler()
+                    HttpPathBuilder(configurationSource).buildHttpHandler()
             )
             server.start()
             LOGGER.info("Started server on port=${server.address.port}")

@@ -1,6 +1,6 @@
-package de.brenner.it.server.parser
+package de.brenner.it.mockserver.parser
 
-import de.brenner.it.server.handler.HttpHandlerEntry
+import de.brenner.it.mockserver.handler.HttpPath
 import java.io.File
 import java.io.FileInputStream
 import java.nio.charset.Charset
@@ -12,7 +12,7 @@ class ResponseParser() {
         private val LOGGER = Logger.getLogger(ResponseParser::class.java.name)
     }
 
-    fun getResponseBody(parentPath: String, httpHandlerEntry: HttpHandlerEntry): ByteArray {
+    fun getResponseBody(parentPath: String, httpHandlerEntry: HttpPath): ByteArray {
         return if (httpHandlerEntry.responseBody != null) {
             httpHandlerEntry.responseBody!!.toByteArray(Charset.defaultCharset())
         } else if (httpHandlerEntry.responseBodyFileReference != null) {
