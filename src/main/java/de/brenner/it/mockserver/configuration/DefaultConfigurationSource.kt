@@ -21,22 +21,26 @@ class DefaultConfigurationSource : IConfigurationSource {
     init {
         try {
             configuration = Paths.get(configFilePath).toFile()
-            LOGGER.info("Start parsing configuration for file with path=${configuration?.name ?: "no config provided"}")
-            val fileEntries = configuration?.let { JsonUtil.readFileContent(it) }
-            if (fileEntries?.paths == null) {
-                LOGGER.info("Parsing created 0 Paths.")
-                this.registeredPaths = mapOf()
-            } else {
-                LOGGER.info("Parsing created ${fileEntries.paths.size} Paths.")
-                val map = mutableMapOf<String, HttpPath>()
-                fileEntries.paths.forEach {
-                    map[it.path!!] = it
-                }
-                this.registeredPaths = map
-            }
+            this.registeredPaths = readRegisteredPaths()
         } catch (e: Exception) {
             LOGGER.warning("Reading the config failed error=${e.message}")
             configuration = null
+        }
+    }
+
+    private fun readRegisteredPaths(): Map<String, HttpPath> {
+        LOGGER.info("Start parsing configuration for file with path=${configuration?.name ?: "no config provided"}")
+        val fileEntries = configuration?.let { JsonUtil.readFileContent(it) }
+        return if (fileEntries?.paths == null) {
+            LOGGER.info("Parsing created 0 Paths.")
+            mapOf()
+        } else {
+            LOGGER.info("Parsing created ${fileEntries.paths.size} Paths.")
+            val map = mutableMapOf<String, HttpPath>()
+            fileEntries.paths.forEach {
+                map[it.path!!] = it
+            }
+            map
         }
     }
 
@@ -44,8 +48,8 @@ class DefaultConfigurationSource : IConfigurationSource {
         return this.registeredPaths
     }
 
-    override fun updatePaths(updatedRegisteredPaths: Map<String, HttpPath>) {
-        this.registeredPaths = updatedRegisteredPaths
+    override fun updatePaths() {
+        this.registeredPaths = readRegisteredPaths()
     }
 
     override fun getConfigurationRootPath(): String {

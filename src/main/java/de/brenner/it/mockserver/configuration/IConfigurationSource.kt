@@ -10,9 +10,9 @@ interface IConfigurationSource {
     fun getRegisteredPaths(): Map<String, HttpPath>
 
     /**
-     * This method can be used to update the registered paths.
+     * Tell the configuration to reload or update the paths
      */
-    fun updatePaths(updatedRegisteredPaths: Map<String, HttpPath>)
+    fun updatePaths()
 
     /**
      * Get the root path of the configuration

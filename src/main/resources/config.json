@@ -24,7 +24,8 @@
       "path": "/v4/api",
       "requestMethod": "GET",
       "requestBody": "api_request.json",
-      "responseStatus": 200
+      "responseStatus": 200,
+      "responseBodyFileReference": "response/api_response_object.json"
     }
   ]
 }

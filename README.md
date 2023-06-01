@@ -5,18 +5,16 @@ Yet another MockServer
 Provides a fake API based on json configuration files.
 
 ## Features
-- TODO 
+- json based configuration
+- file watcher for reload of the configured paths
 
 ## Roadmap
 
-- auto reload of configuration changes https://docs.oracle.com/javase/tutorial/essential/io/examples/WatchDir.java
 - Make config path based on a canonical path
 - configuration validation
 - add different request,response types xml ,json, text/html
-- unit tests
 - Readme
 - extend functionality to update/create entries with a post call
-- dockerize
 
 # Starting the server
 

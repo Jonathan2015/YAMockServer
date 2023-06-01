@@ -109,6 +109,7 @@ class FileWatcher(private val configuration: IConfigurationSource) : Thread() {
                         // ignore to keep sample readbale
                     }
                 }
+                this.configuration.updatePaths()
             }
 
             // reset key and remove from set if directory no longer accessible
