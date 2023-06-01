@@ -16,6 +16,7 @@ Provides a fake API based on json configuration files.
 - unit tests
 - Readme
 - extend functionality to update/create entries with a post call
+- dockerize
 
 # Starting the server
 
@@ -52,7 +53,11 @@ TODO
 
 ## Docker
 
-TODO
+```
+docker build -t yamockserver .
+
+docker run -e CONFIG_PATH=/app/custom-config.json yamockserver````
+```
 
 # Configuration
 

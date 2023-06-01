@@ -4,14 +4,13 @@ import com.sun.net.httpserver.HttpExchange
 import com.sun.net.httpserver.HttpHandler
 import de.brenner.it.mockserver.configuration.DefaultConfigurationSource
 import de.brenner.it.mockserver.configuration.IConfigurationSource
-import de.brenner.it.mockserver.logger.ExchangeLogger
 import de.brenner.it.mockserver.parser.RequestParser
 import de.brenner.it.mockserver.parser.ResponseParser
 import java.io.IOException
 import java.util.*
 import java.util.logging.Logger
 
-class HttpPathBuilder(configurationSource: IConfigurationSource) {
+class HttpPathBuilder(private val configurationSource: IConfigurationSource) {
 
     companion object {
         private val LOGGER = Logger.getLogger(HttpPathBuilder::class.java.name)
@@ -19,17 +18,16 @@ class HttpPathBuilder(configurationSource: IConfigurationSource) {
 
     private val requestParser: RequestParser
     private val responseParser: ResponseParser
-    private val httpHandlerEntries: MutableMap<String, HttpPath>
     private val configParser: DefaultConfigurationSource
 
     init {
         configParser = DefaultConfigurationSource()
         requestParser = RequestParser()
         responseParser = ResponseParser()
-        httpHandlerEntries = configurationSource.getConfiguration()
     }
 
     fun buildHttpHandler(): HttpHandler {
+        val httpHandlerEntries = configurationSource.getRegisteredPaths()
         return if (httpHandlerEntries.isEmpty()) {
             LOGGER.info("No HttpHandlerEntries were defined, return default HttpHandler for \"/\"")
             enableDefaultHttpHandling()
@@ -45,13 +43,12 @@ class HttpPathBuilder(configurationSource: IConfigurationSource) {
                 val httpHandlerEntryOptional = getHttpHandlerEntry(exchange)
                 val message: String
                 if (httpHandlerEntryOptional.isPresent) {
-                    message = "Valid request"
+                    LOGGER.info("Received valid request Method=${exchange.requestMethod}, Path=${exchange.requestURI}, Body=${requestParser.parseRequestBodyFromHttpExchange(exchange)}")
                     generateResponse(exchange, httpHandlerEntryOptional.get())
                 } else {
-                    message = "Invalid request"
+                    LOGGER.info("Received invalid request Method=${exchange.requestMethod}, Path=${exchange.requestURI}, Body=${requestParser.parseRequestBodyFromHttpExchange(exchange)}")
                     exchange.sendResponseHeaders(400, 0)
                 }
-                ExchangeLogger.logHttpExchange(exchange, message)
             }
         }
     }
@@ -59,7 +56,7 @@ class HttpPathBuilder(configurationSource: IConfigurationSource) {
     private fun enableDefaultHttpHandling(): HttpHandler {
         return HttpHandler { exchange: HttpExchange ->
             exchange.use { exchange ->
-                ExchangeLogger.logHttpExchange(exchange, "no Configuration was loaded - Print request data only:")
+                LOGGER.info("No Configuration was loaded - Print request data only: Method=${exchange.requestMethod}, Path=${exchange.requestURI}, Body=${requestParser.parseRequestBodyFromHttpExchange(exchange)}")
                 exchange.sendResponseHeaders(200, 0)
             }
         }
@@ -83,7 +80,7 @@ class HttpPathBuilder(configurationSource: IConfigurationSource) {
     }
 
     private fun getHttpHandlerEntry(exchange: HttpExchange): Optional<HttpPath> {
-        val httpPathEntry = httpHandlerEntries.get(exchange.requestURI.toASCIIString())
+        val httpPathEntry = configurationSource.getRegisteredPaths()[exchange.requestURI.toASCIIString()]
         return if (httpPathEntry != null && httpPathEntry.requestMethod!!.lowercase(Locale.getDefault()) == exchange.requestMethod.lowercase(Locale.getDefault())) {
             Optional.of(httpPathEntry)
         } else {

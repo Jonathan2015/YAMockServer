@@ -19,6 +19,12 @@
       "requestMethod": "GET",
       "requestBody": "api_request.json",
       "responseStatus": 200
+    },
+    {
+      "path": "/v4/api",
+      "requestMethod": "GET",
+      "requestBody": "api_request.json",
+      "responseStatus": 200
     }
   ]
 }

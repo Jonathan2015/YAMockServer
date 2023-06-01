@@ -4,11 +4,14 @@ import com.sun.net.httpserver.HttpServer
 import de.brenner.it.mockserver.configuration.DefaultConfigurationSource
 import de.brenner.it.mockserver.configuration.IConfigurationSource
 import de.brenner.it.mockserver.handler.HttpPathBuilder
+import de.brenner.it.mockserver.util.FileWatcher
 import java.io.IOException
 import java.net.InetSocketAddress
 import java.util.logging.Logger
 
 class MockServer(private var port: Int = 9090, private var configurationSource: IConfigurationSource = DefaultConfigurationSource()) {
+
+    private lateinit var fileWatcher: FileWatcher
 
     companion object {
         private val LOGGER = Logger.getLogger(MockServer::class.java.name)
@@ -24,7 +27,9 @@ class MockServer(private var port: Int = 9090, private var configurationSource: 
         return this
     }
 
+
     fun start() {
+        this.fileWatcher = FileWatcher(configurationSource)
         val inetSocketAddress = InetSocketAddress(port)
         try {
             val server = HttpServer.create(
@@ -36,7 +41,7 @@ class MockServer(private var port: Int = 9090, private var configurationSource: 
             server.start()
             LOGGER.info("Started server on port=${server.address.port}")
         } catch (e: IOException) {
-            LOGGER.warning("Starting the server failed" + e.message)
+            LOGGER.warning("Starting the server failed ${e.message}")
         }
     }
 
